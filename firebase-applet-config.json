@@ -1,0 +1,153 @@
+import React, { useState } from 'react';
+import { signInWithPopup, GoogleAuthProvider, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { auth, db } from '../firebase';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { useAuth } from '../AuthContext';
+import { LogIn, LogOut, Shield, User as UserIcon, Mail, Lock, UserPlus, ChevronRight } from 'lucide-react';
+import { UserRole, UserProfile } from '../types';
+import { cn } from '../lib/utils';
+
+export const Login: React.FC = () => {
+  const { user, profile, loading } = useAuth();
+  const [error, setError] = useState('');
+  const [authLoading, setAuthLoading] = useState<UserRole | null>(null);
+
+  const handleGoogleLogin = async (selectedRole: UserRole) => {
+    try {
+      setError('');
+      setAuthLoading(selectedRole);
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      const newUser = result.user;
+
+      // Check if profile exists, if not create it with the selected role
+      const userRef = doc(db, 'users', newUser.uid);
+      const userDoc = await getDoc(userRef);
+
+      if (!userDoc.exists()) {
+        let finalRole = selectedRole;
+        // Keep the admin override for the specific email
+        if (newUser.email === 'shaikhassain1002@gmail.com') {
+          finalRole = 'admin';
+        }
+
+        const newProfile: UserProfile = {
+          uid: newUser.uid,
+          name: newUser.displayName || newUser.email?.split('@')[0] || 'Anonymous User',
+          email: newUser.email || '',
+          role: finalRole,
+          createdAt: new Date().toISOString(),
+        };
+
+        await setDoc(userRef, newProfile);
+      }
+    } catch (err: any) {
+      console.error(err);
+      if (err.code === 'auth/operation-not-allowed') {
+        setError('Google login is not enabled in Firebase. Please enable it in the Firebase Console.');
+      } else {
+        setError('Failed to login with Google');
+      }
+    } finally {
+      setAuthLoading(null);
+    }
+  };
+
+  const handleLogout = () => signOut(auth);
+
+  if (loading) return null;
+
+  if (user && profile) {
+    return (
+      <div className="flex items-center gap-4 bg-white px-4 py-2 rounded-full shadow-sm border border-slate-100">
+        <div className="flex flex-col items-end">
+          <span className="text-sm font-bold text-slate-900">{profile.name}</span>
+          <span className="text-[10px] uppercase tracking-widest font-bold text-emerald-600">{profile.role}</span>
+        </div>
+        <button 
+          onClick={handleLogout}
+          className="p-2 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-full transition-all"
+        >
+          <LogOut className="w-5 h-5" />
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col items-center gap-8 p-10 glass-card rounded-[2.5rem] max-w-md w-full mx-auto">
+      <div className="w-20 h-20 vibrant-gradient rounded-3xl flex items-center justify-center text-white shadow-xl shadow-emerald-100 rotate-3">
+        <Shield className="w-10 h-10 -rotate-3" />
+      </div>
+      
+      <div className="text-center space-y-2">
+        <h2 className="text-3xl font-black text-slate-900 tracking-tight">
+          CivicBridge Portal
+        </h2>
+        <p className="text-slate-500 text-sm font-medium">
+          Select your role to continue with secure authentication.
+        </p>
+      </div>
+
+      {error && (
+        <div className="w-full p-4 bg-red-50 text-red-600 text-xs font-bold rounded-2xl border border-red-100 flex items-center gap-3">
+          <div className="w-1.5 h-1.5 bg-red-600 rounded-full animate-pulse" />
+          {error}
+        </div>
+      )}
+
+      <div className="w-full space-y-8">
+        {/* Citizen Section */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="h-px bg-slate-100 flex-1" />
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Citizen Access</span>
+            <div className="h-px bg-slate-100 flex-1" />
+          </div>
+          <button
+            onClick={() => handleGoogleLogin('citizen')}
+            disabled={!!authLoading}
+            className="w-full flex items-center justify-center gap-4 bg-white border-2 border-slate-100 text-slate-700 py-4 rounded-2xl font-bold hover:border-emerald-500 hover:bg-emerald-50/30 transition-all active:scale-[0.98] group disabled:opacity-50"
+          >
+            {authLoading === 'citizen' ? (
+              <div className="w-5 h-5 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <>
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5 grayscale group-hover:grayscale-0 transition-all" alt="Google" />
+                CONTINUE AS CITIZEN
+              </>
+            )}
+          </button>
+        </div>
+
+        {/* Official Section */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="h-px bg-slate-100 flex-1" />
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Government Official</span>
+            <div className="h-px bg-slate-100 flex-1" />
+          </div>
+          <button
+            onClick={() => handleGoogleLogin('official')}
+            disabled={!!authLoading}
+            className="w-full flex items-center justify-center gap-4 bg-slate-900 text-white py-4 rounded-2xl font-bold hover:bg-slate-800 transition-all active:scale-[0.98] shadow-lg shadow-slate-200 disabled:opacity-50"
+          >
+            {authLoading === 'official' ? (
+              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <>
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5 invert group-hover:invert-0 transition-all" alt="Google" />
+                CONTINUE AS OFFICIAL
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2 text-[10px] font-black text-slate-300 uppercase tracking-widest pt-4">
+        <Shield className="w-3 h-3" />
+        Secure Government Utility
+      </div>
+    </div>
+  );
+};

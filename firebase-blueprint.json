@@ -1,0 +1,55 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile with role-based access information.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Firebase Auth UID" },
+        "name": { "type": "string", "description": "Full name of the user" },
+        "email": { "type": "string", "format": "email", "description": "Email address" },
+        "role": { "type": "string", "enum": ["citizen", "official", "admin"], "description": "User role" },
+        "department": { "type": "string", "description": "Department for officials (e.g., Road, Water)" },
+        "contactInfo": { "type": "string", "description": "Phone number or other contact details" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "name", "email", "role"]
+    },
+    "Complaint": {
+      "title": "Complaint",
+      "description": "Civic issue reported by a citizen.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique complaint ID" },
+        "userId": { "type": "string", "description": "UID of the citizen who reported it" },
+        "userName": { "type": "string", "description": "Name of the citizen" },
+        "category": { "type": "string", "enum": ["Road", "Water", "Electricity", "Sanitation", "Other"], "description": "Issue category" },
+        "description": { "type": "string", "description": "Detailed description of the issue" },
+        "location": {
+          "type": "object",
+          "properties": {
+            "latitude": { "type": "number" },
+            "longitude": { "type": "number" },
+            "address": { "type": "string" }
+          }
+        },
+        "status": { "type": "string", "enum": ["Submitted", "Under Review", "Assigned", "In Progress", "Resolved"], "description": "Current status" },
+        "remarks": { "type": "string", "description": "Official remarks or updates" },
+        "assignedTo": { "type": "string", "description": "UID of the official assigned to this issue" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "category", "description", "status", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles"
+    },
+    "/complaints/{complaintId}": {
+      "schema": "Complaint",
+      "description": "Civic complaints"
+    }
+  }
+}

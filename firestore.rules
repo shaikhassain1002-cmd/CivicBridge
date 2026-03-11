@@ -1,0 +1,72 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    // Collection: users
+    // Fields: uid, name, email, role (citizen, official, admin), department, contactInfo, createdAt
+    //
+    // Collection: complaints
+    // Fields: id, userId, userName, category, description, location, status, remarks, assignedTo, createdAt, updatedAt
+    // ===============================================================
+
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function hasRole(role) {
+      return isAuthenticated() && getUserData().role == role;
+    }
+
+    function isAdmin() {
+      return hasRole('admin') || (request.auth.token.email == "shaikhassain1002@gmail.com" && request.auth.token.email_verified == true);
+    }
+
+    function isOfficial() {
+      return hasRole('official') || isAdmin();
+    }
+
+    // Validation Functions
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'name', 'email', 'role']) &&
+             data.role in ['citizen', 'official', 'admin'] &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100;
+    }
+
+    function isValidComplaint(data) {
+      return data.keys().hasAll(['userId', 'category', 'description', 'status', 'createdAt']) &&
+             data.category in ['Road', 'Water', 'Electricity', 'Sanitation', 'Other'] &&
+             data.status in ['Submitted', 'Under Review', 'Assigned', 'In Progress', 'Resolved'] &&
+             data.description is string && data.description.size() > 0 && data.description.size() < 5000;
+    }
+
+    // Rules
+    match /_connection_test_/{docId} {
+      allow read: if true;
+    }
+
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isOwner(userId) && isValidUser(request.resource.data) && 
+                    (request.resource.data.role in ['citizen', 'official'] || (request.resource.data.email == "shaikhassain1002@gmail.com" && request.resource.data.role == "admin"));
+      allow update: if isAuthenticated() && (isOwner(userId) || isAdmin()) && isValidUser(request.resource.data) && (isAdmin() || request.resource.data.role == resource.data.role);
+    }
+
+    match /complaints/{complaintId} {
+      allow read: if isAuthenticated() && (isOwner(resource.data.userId) || isOfficial());
+      allow create: if isAuthenticated() && isValidComplaint(request.resource.data) && request.resource.data.userId == request.auth.uid;
+      allow update: if isAuthenticated() && (isAdmin() || (isOfficial() && request.resource.data.diff(resource.data).affectedKeys().hasAny(['status', 'remarks', 'assignedTo', 'updatedAt'])));
+      allow delete: if isAdmin();
+    }
+  }
+}

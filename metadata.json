@@ -1,0 +1,5 @@
+{
+  "name": "CivicBridge",
+  "description": "A centralized digital platform for reporting and tracking civic issues with role-based access for citizens and officials.",
+  "requestFramePermissions": ["geolocation"]
+}
