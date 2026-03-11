@@ -1,5 +1,3 @@
-<img width="1919" height="854" alt="Screenshot 2026-03-11 112236" src="https://github.com/user-attachments/assets/85ebecf3-a0ab-4283-8002-0878388c4bfd" /># CivicBridge
-
 ## Problem
 
 In many cities, citizens face civic problems like potholes, garbage dumping, broken street lights, and water leaks.
@@ -68,13 +66,13 @@ http://localhost:3000
 ## Screenshots
 
 <h3>Login Page</h3>
-<img src="C:\Users\SHAIK HASSAIN\OneDrive\Pictures\Screenshots\Screenshot 2026-03-11 112113.png" alt="Login Page" width="800"/>
+<img src="Screenshot%202026-03-11%20112113.png" alt="Login Page" width="800"/>
 
 <h3>Report Issue Page</h3>
-<img src=""C:\Users\SHAIK HASSAIN\OneDrive\Pictures\Screenshots\Screenshot 2026-03-11 112209.png"" alt="Report Issue Page" width="800"/>
+<img src="Screenshot%202026-03-11%20112209.png" alt="Report Issue Page" width="800"/>
 
 <h3>Official Dashboard</h3>
-<img src="C:\Users\SHAIK HASSAIN\OneDrive\Pictures\Screenshots\Screenshot 2026-03-11 112236.png" width="800"/>
+<img src="Screenshot%202026-03-11%20112236.png" width="800"/>
 
 ## Future Improvements
 
